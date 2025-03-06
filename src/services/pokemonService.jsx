@@ -24,3 +24,13 @@ export const fetchPokemonList = async (page) => {
     throw error;
   }
 };
+
+export const fetchAllPokemonList = async () => {
+  try {
+    const response = await fetch("https://pokeapi.co/api/v2/pokemon?limit=100000&offset=0");
+    return response;
+  } catch (error) {
+    console.error("Error fetching data:", error);
+    throw error;
+  }
+};

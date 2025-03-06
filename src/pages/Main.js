@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 //SERVICES
-import { fetchPokemonList, fetchPokemonDetails } from "../services/pokemonService";
+import { fetchPokemonList, fetchPokemonDetails, fetchAllPokemonList } from "../services/pokemonService";
 import { capitalizeFirstLetter } from "../services/commonServices";
 
 //COMPONENTS
@@ -9,6 +9,7 @@ import Item from "../components/Item";
 
 //STYLING
 import "./Main.scss"
+import { useQuery } from "@tanstack/react-query";
 
 export default function Main() {
     
@@ -25,6 +26,10 @@ export default function Main() {
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const observer = useRef();
+
+    // SEARCH
+    const [searchTerm, setSearchTerm] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
 
     useEffect(() => { // TO GET LITS OF POKEMONS
         const fetchList = async () => {
@@ -54,7 +59,7 @@ export default function Main() {
         };
 
         fetchList();
-    }, [page]);
+    }, [page, isLoading, hasMore]);
 
     useEffect(() => { // TO GET DETAILED INFO ABOUT THE SELECTED POKEMON BEING DISPLAYED ON THE MODAL
         if (showDetails && selectedPokemon) {
@@ -90,6 +95,31 @@ export default function Main() {
             if (lastElementRef.current) observer.current.unobserve(lastElementRef.current);
         };
     }, [pokemonList]);
+    
+    useEffect(() => { // TO HANDLE FILTER LIST INPUT
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+        }, 300);
+
+        return () => clearTimeout(handler);
+    }, [searchTerm]);
+
+    const { data: allPokemonData, isLoading: isSearching } = useQuery({
+        queryKey: ["allPokemons"],
+        queryFn: async () => {
+            const response = await fetchAllPokemonList();
+            const data = await response.json();
+            return data.results || [];
+        },
+        staleTime: Infinity,
+    });
+
+    const filteredPokemons = useMemo(() => {
+        if (debouncedSearch.length < 3) return [];
+        return allPokemonData?.filter((pokemon) =>
+            pokemon.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+        );
+    }, [debouncedSearch, allPokemonData]);
 
     return (
         <div>
@@ -124,31 +154,77 @@ export default function Main() {
                                 </ul>
                             </div>
                         </div>
-                        <button type="button" class="btn btn-primary" onClick={() => setShowDetails(false)}>Close</button>
+                        <button type="button" className="btn btn-primary" onClick={() => setShowDetails(false)}>Close</button>
                     </div>
                 </div>
             )}
 
-            <ul className="mainList">
-                {pokemonList.length > 0 ? (
-                    pokemonList.map((pokemon,index) => (
-                        <li key={pokemon.name+index}
-                            className="listDetail" 
-                            onClick={() => {
-                            setSelectedPokemon(pokemon);
-                            setShowDetails(true);
-                        }}>
-                            <Item name={pokemon.name} />
-                        </li>
-                    ))
+            <div className="card, filterInput">
+                 <div className="card-header">
+                     Find Your Pokemon
+                 </div>
+                 <div className="card-body">
+
+                    <input
+                        type="text"
+                        placeholder="Search Pokémon..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="searchInput , form-control"
+                    />
+
+                 </div>
+
+            </div>
+
+            { !debouncedSearch ? (
+
+                <div className="mainListContainer">
+
+                    <ul className="mainList">
+                        {pokemonList.length > 0 ? (
+                            pokemonList.map((pokemon,index) => (
+                                <li key={pokemon.name+index}
+                                    className="listDetail" 
+                                    onClick={() => {
+                                    setSelectedPokemon(pokemon);
+                                    setShowDetails(true);
+                                }}>
+                                    <Item name={pokemon.name} />
+                                </li>
+                            ))
+                        ) : (
+                            <p>Loading...</p>
+                        )}
+                    </ul>
+                    {isLoading && <p>Loading more Pokémon...</p>}
+
+                    <div ref={lastElementRef} style={{ height: "20px" }}></div>
+                </div>
+
                 ) : (
-                    <p>Loading...</p>
-                )}
-            </ul>
 
-            {isLoading && <p>Loading more Pokémon...</p>}
+                    <div className="mainListContainer">
 
-            <div ref={lastElementRef} style={{ height: "20px" }}></div>
+                        <ul className="mainList">
+                            {filteredPokemons && filteredPokemons.length > 0 ? (
+                                filteredPokemons.map((pokemon,index) => (
+                                    <li key={pokemon.name+index}
+                                        className="listDetail" 
+                                        onClick={() => {
+                                        setSelectedPokemon(pokemon);
+                                        setShowDetails(true);
+                                    }}>
+                                        <Item name={pokemon.name} />
+                                    </li>
+                                ))
+                            ) : (
+                                <p>Loading...</p>
+                            )}
+                        </ul>
+                    </div>
+
+                ) }
         </div>
     );
 }

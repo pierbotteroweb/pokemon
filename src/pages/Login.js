@@ -20,8 +20,7 @@ export default function Login(){
 
     const handleSubmit = function(event){
         event.preventDefault()
-        console.log("loginData",loginData)
-        if(loginData.username === "admin" && loginData.password=="admin"){
+        if(loginData.username === "admin" && loginData.password === "admin"){
             sessionStorage.setItem("token","loginOk")
             navigate("/")
         } else {
@@ -37,7 +36,7 @@ export default function Login(){
             </div>
             <div className="card-body">
                 <form onSubmit={handleSubmit} >
-                    <div class="mb-3">
+                    <div className="mb-3">
                         <label for="username" className="form-label"> Username </label>
                         <input
                             type="text"
@@ -50,7 +49,7 @@ export default function Login(){
                             required
                         />
                     </div>
-                    <div class="mb-3">
+                    <div className="mb-3">
                         <label for="password" className="form-label" > Password </label>
                         <div style={{display:"flex", gap:"5px", marginBottom:"0"}} >
                             <input
@@ -74,7 +73,7 @@ export default function Login(){
                     <button type="submitt" className="btn btn-primary" style={{marginTop:"10px"}} >Submit</button>
                 </form>
             </div>
-            <div class="row align-items-center">
+            <div className="row align-items-center">
   </div>
         </div>
     )
