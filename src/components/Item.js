@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import { fetchPokemonDetails } from "../services/pokemonService"
+import { capitalizeFirstLetter } from "../services/commonServices";
 import './Item.scss'
 
 export default function Item({name}){
@@ -27,7 +28,7 @@ export default function Item({name}){
         <div className="card overviewItem">
             {pokemonData.image && <img className="card-image-top" src={pokemonData.image} alt="..." />}
             <div className="card-body">
-                <h5 className="card-title">{pokemonData.name || "Loading..." }</h5>
+                <h5 className="card-title">{capitalizeFirstLetter(pokemonData.name) || "Loading..." }</h5>
             </div>
         </div>
         

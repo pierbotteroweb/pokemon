@@ -2,14 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 //SERVICES
 import { fetchPokemonList, fetchPokemonDetails, fetchAllPokemonList } from "../services/pokemonService";
-import { capitalizeFirstLetter } from "../services/commonServices";
-
 //COMPONENTS
 import Item from "../components/Item";
 
 //STYLING
 import "./Main.scss"
 import { useQuery } from "@tanstack/react-query";
+import Details from "../components/Details";
 
 export default function Main() {
     
@@ -121,42 +120,17 @@ export default function Main() {
         );
     }, [debouncedSearch, allPokemonData]);
 
+    const handleCloseModalButton = function(){
+        setShowDetails(false);
+
+    }
+
+    const displayedPokemons = debouncedSearch ? filteredPokemons : pokemonList;
+
     return (
         <div>
             {showDetails && pokemonDetails.sprites && (
-                <div className="modalContainer">
-                    <div className="modalDetails">
-                        <h1>{capitalizeFirstLetter(pokemonDetails.name)}</h1>
-                        <img src={pokemonDetails.sprites.other['official-artwork'].front_default} width="200" alt={pokemonDetails.name} />
-                        <div className="details">
-                            <div>
-                                <h2>Moves</h2>
-                                <ul style={{listStyleType: "none", padding:0}} >
-                                    {pokemonDetails.moves.slice(0, 5).map((move, index) => (
-                                        <li key={index}>{move.move.name}</li>
-                                    ))}
-                                </ul>
-                            </div>
-                            <div>
-                                <h2>Abilities</h2>
-                                <ul style={{listStyleType: "none", padding:0}} >
-                                    {pokemonDetails.abilities.map((ability, index) => (
-                                        <li key={index}>{ability.ability.name}</li>
-                                    ))}
-                                </ul>
-                            </div>
-                            <div>
-                                <h2>Forms</h2>
-                                <ul style={{listStyleType: "none", padding:0}} >
-                                    {pokemonDetails.forms.map((form, index) => (
-                                        <li key={index}>{form.name}</li>
-                                    ))}
-                                </ul>
-                            </div>
-                        </div>
-                        <button type="button" className="btn btn-primary" onClick={() => setShowDetails(false)}>Close</button>
-                    </div>
-                </div>
+                <Details pokemonDetails={pokemonDetails} onCloseClick={handleCloseModalButton} />
             )}
 
             <div className="card, filterInput">
@@ -177,54 +151,30 @@ export default function Main() {
 
             </div>
 
-            { !debouncedSearch ? (
+            <div className="mainListContainer">
 
-                <div className="mainListContainer">
+                <ul className="mainList">
+                    {displayedPokemons.length > 0 ? (
+                        displayedPokemons.map((pokemon,index) => (
+                            <li key={pokemon.name+index}
+                                className="listDetail" 
+                                onClick={() => {
+                                setSelectedPokemon(pokemon);
+                                setShowDetails(true);
+                            }}>
+                                <Item name={pokemon.name} />
+                            </li>
+                        ))
+                    ) : (
+                        <p>Loading...</p>
+                    )}
+                </ul>
+                {(isLoading && !debouncedSearch) && <p>Loading more Pokémon...</p>}
 
-                    <ul className="mainList">
-                        {pokemonList.length > 0 ? (
-                            pokemonList.map((pokemon,index) => (
-                                <li key={pokemon.name+index}
-                                    className="listDetail" 
-                                    onClick={() => {
-                                    setSelectedPokemon(pokemon);
-                                    setShowDetails(true);
-                                }}>
-                                    <Item name={pokemon.name} />
-                                </li>
-                            ))
-                        ) : (
-                            <p>Loading...</p>
-                        )}
-                    </ul>
-                    {isLoading && <p>Loading more Pokémon...</p>}
+                {!debouncedSearch && <div ref={lastElementRef} style={{ height: "20px" }}></div>}
 
-                    <div ref={lastElementRef} style={{ height: "20px" }}></div>
-                </div>
-
-                ) : (
-
-                    <div className="mainListContainer">
-
-                        <ul className="mainList">
-                            {filteredPokemons && filteredPokemons.length > 0 ? (
-                                filteredPokemons.map((pokemon,index) => (
-                                    <li key={pokemon.name+index}
-                                        className="listDetail" 
-                                        onClick={() => {
-                                        setSelectedPokemon(pokemon);
-                                        setShowDetails(true);
-                                    }}>
-                                        <Item name={pokemon.name} />
-                                    </li>
-                                ))
-                            ) : (
-                                <p>Loading...</p>
-                            )}
-                        </ul>
-                    </div>
-
-                ) }
+            </div>
+            
         </div>
     );
 }
